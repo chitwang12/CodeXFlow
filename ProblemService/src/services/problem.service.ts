@@ -1,17 +1,18 @@
-import { CreateProblemDTO, UpdateProblemDTO } from "../dto/problem.dto";
+import { CreateProblemDto, UpdateProblemDto } from "../validators/problem.validator";
 import { IProblem } from "../models/problem.model";
 import { IProblemRepository } from "../repositories/problem.repository";
 import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
+import { sanitizeMarkdown } from "../utils/helpers/markdown.sanitize"
 import logger from "../config/logger.config";
-import sanitize from "sanitize-html";
+
 
 
 
 export interface IProblemService {
-    createProblem(problem: CreateProblemDTO): Promise<IProblem>;
+    createProblem(problem: CreateProblemDto): Promise<IProblem>;
     getProblemById(id: string): Promise<IProblem>;
     getAllProblems(): Promise<IProblem[]>;
-    updateProblem(id: string, problem: UpdateProblemDTO): Promise<IProblem | null>;
+    updateProblem(id: string, problem: UpdateProblemDto): Promise<IProblem | null>;
     deleteProblem(id: string): Promise<boolean>;
     findByDifficulty?(difficulty: "easy" | "medium" | "hard"): Promise<IProblem[]>;
     searchProblems(query: string): Promise<IProblem[]>;
@@ -31,13 +32,13 @@ export class ProblemService implements IProblemService {
      * @param problem 
      * @returns 
      */
-    async createProblem(problem: CreateProblemDTO): Promise<IProblem> {
+    async createProblem(problem: CreateProblemDto): Promise<IProblem> {
 
         //Sanitize the markdown 
         const sanitizedPayLoad = {
             ...problem,
-            description: await sanitize(problem.description),
-            editorial: problem.editorial && await sanitize(problem.editorial || '')
+            description: await sanitizeMarkdown(problem.description),
+            editorial: problem.editorial && await sanitizeMarkdown(problem.editorial || '')
         }
         return await this.problemRepository.createProblem(sanitizedPayLoad);
     }
@@ -72,7 +73,7 @@ export class ProblemService implements IProblemService {
      * @param problem 
      * @returns updated problem
      */
-    async updateProblem(id: string, updateData: UpdateProblemDTO): Promise<IProblem | null> {
+    async updateProblem(id: string, updateData: UpdateProblemDto): Promise<IProblem | null> {
         const problem = await this.problemRepository.getProblemById(id);
 
         if(!problem) {
@@ -83,11 +84,11 @@ export class ProblemService implements IProblemService {
             ...updateData
         }
         if(updateData.description) {
-            sanitizedPayload.description = await sanitize(updateData.description);
+            sanitizedPayload.description = await sanitizeMarkdown(updateData.description);
         }
 
         if(updateData.editorial) {
-            sanitizedPayload.editorial = await sanitize(updateData.editorial);
+            sanitizedPayload.editorial = await sanitizeMarkdown(updateData.editorial);
         }
 
         return await this.problemRepository.updateProblem(id, sanitizedPayload);
