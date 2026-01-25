@@ -1,140 +1,123 @@
-import { CreateProblemDto, UpdateProblemDto } from "../validators/problem.validator";
-import { IProblem } from "../models/problem.model";
 import { IProblemRepository } from "../repositories/problem.repository";
+import { IProblem } from "../models/problem.model";
+import { CreateProblemDto, UpdateProblemDto } from "../validators/problem.validator";
 import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
-import { sanitizeMarkdown } from "../utils/helpers/markdown.sanitize"
-import logger from "../config/logger.config";
+import { sanitizeMarkdown } from "../utils/helpers/markdown.sanitize";
 
+/**
+ * Explicit difficulty types
+ */
+type DifficultyDTO = "easy" | "medium" | "hard";
+type DifficultyDomain = "Easy" | "Medium" | "Hard";
 
+/**
+ * Canonical mapping
+ */
+const difficultyMap: Record<DifficultyDTO, DifficultyDomain> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+};
 
-
-export interface IProblemService {
-    createProblem(problem: CreateProblemDto): Promise<IProblem>;
-    getProblemById(id: string): Promise<IProblem>;
-    getAllProblems(): Promise<IProblem[]>;
-    updateProblem(id: string, problem: UpdateProblemDto): Promise<IProblem | null>;
-    deleteProblem(id: string): Promise<boolean>;
-    findByDifficulty?(difficulty: "easy" | "medium" | "hard"): Promise<IProblem[]>;
-    searchProblems(query: string): Promise<IProblem[]>;
+/**
+ * Safe mapper function
+ */
+function mapDifficulty(difficulty: DifficultyDTO): DifficultyDomain {
+  return difficultyMap[difficulty];
 }
 
+export interface IProblemService {
+  createProblem(problem: CreateProblemDto): Promise<IProblem>;
+  getProblemById(id: string): Promise<IProblem>;
+  getAllProblems(): Promise<IProblem[]>;
+  updateProblem(id: string, problem: UpdateProblemDto): Promise<IProblem | null>;
+  deleteProblem(id: string): Promise<boolean>;
+  findByDifficulty(difficulty: DifficultyDTO): Promise<IProblem[]>;
+  searchProblems(query: string): Promise<IProblem[]>;
+}
 
 export class ProblemService implements IProblemService {
-    private problemRepository: IProblemRepository;
+  constructor(private readonly problemRepository: IProblemRepository) {}
 
-    constructor(problemRepository: IProblemRepository) {
-        this.problemRepository = problemRepository;
+  async createProblem(problem: CreateProblemDto): Promise<IProblem> {
+    const payload: Partial<IProblem> = {
+      title: problem.title,
+      description: await sanitizeMarkdown(problem.description),
+      editorial: problem.editorial
+        ? await sanitizeMarkdown(problem.editorial)
+        : undefined,
+      difficulty: mapDifficulty(problem.difficulty),
+      testcases: problem.testcases,
+    };
+
+    return this.problemRepository.createProblem(payload);
+  }
+
+  async getProblemById(id: string): Promise<IProblem> {
+    const problem = await this.problemRepository.getProblemById(id);
+    if (!problem) {
+      throw new NotFoundError("Problem not found");
+    }
+    return problem;
+  }
+
+  async getAllProblems(): Promise<IProblem[]> {
+    return this.problemRepository.getAllProblems();
+  }
+
+  async updateProblem(id: string, updateData: UpdateProblemDto): Promise<IProblem | null> {
+    const existing = await this.problemRepository.getProblemById(id);
+    if (!existing) {
+      throw new NotFoundError("Problem not found");
     }
 
+    const payload: Partial<IProblem> = {};
 
-    /**
-     * 
-     * @param problem 
-     * @returns 
-     */
-    async createProblem(problem: CreateProblemDto): Promise<IProblem> {
+    if (updateData.title) payload.title = updateData.title;
 
-        //Sanitize the markdown 
-        const sanitizedPayLoad = {
-            ...problem,
-            description: await sanitizeMarkdown(problem.description),
-            editorial: problem.editorial && await sanitizeMarkdown(problem.editorial || '')
-        }
-        return await this.problemRepository.createProblem(sanitizedPayLoad);
+    if (updateData.description) {
+      payload.description = await sanitizeMarkdown(updateData.description);
     }
 
-
-    /**
-     * 
-     * @param id 
-     * @returns problem
-     */
-    async getProblemById(id: string): Promise<IProblem> {
-        const problem = await this.problemRepository.getProblemById(id);
-        if(!problem){
-            throw new NotFoundError('Problem not found');
-        } 
-        logger.info(`Problem retrieved with ID: ${id}`);
-        return problem;
+    if (updateData.editorial) {
+      payload.editorial = await sanitizeMarkdown(updateData.editorial);
     }
 
-    /**
-     * 
-     * @returns all problems
-     */
-    async getAllProblems(): Promise<IProblem[]> {
-        return await this.problemRepository.getAllProblems();
+    if (updateData.difficulty) {
+      payload.difficulty = mapDifficulty(updateData.difficulty);
     }
 
-
-    /**
-     * 
-     * @param id 
-     * @param problem 
-     * @returns updated problem
-     */
-    async updateProblem(id: string, updateData: UpdateProblemDto): Promise<IProblem | null> {
-        const problem = await this.problemRepository.getProblemById(id);
-
-        if(!problem) {
-            throw new NotFoundError("Problem not found");
-        }
-
-        const sanitizedPayload: Partial<IProblem> = {
-            ...updateData
-        }
-        if(updateData.description) {
-            sanitizedPayload.description = await sanitizeMarkdown(updateData.description);
-        }
-
-        if(updateData.editorial) {
-            sanitizedPayload.editorial = await sanitizeMarkdown(updateData.editorial);
-        }
-
-        return await this.problemRepository.updateProblem(id, sanitizedPayload);
+    if (updateData.testcases) {
+      payload.testcases = updateData.testcases;
     }
 
-    /**
-     * 
-     * @param id 
-     * @returns 
-     */
+    return this.problemRepository.updateProblem(id, payload);
+  }
 
-    async deleteProblem(id: string): Promise<boolean> {
-        const deleted = await this.problemRepository.deleteProblem(id);
-        if(!deleted){
-            throw new NotFoundError('Problem not found for deletion');
-        } else {
-            logger.info(`Problem deleted with ID: ${id}`);
-        }
-        return deleted;
+  async deleteProblem(id: string): Promise<boolean> {
+    const deleted = await this.problemRepository.deleteProblem(id);
+    if (!deleted) {
+      throw new NotFoundError("Problem not found");
+    }
+    return true;
+  }
+
+  async findByDifficulty(difficulty: DifficultyDTO): Promise<IProblem[]> {
+    const problems = await this.problemRepository.findByDifficulty(
+      mapDifficulty(difficulty)
+    );
+
+    if (problems.length === 0) {
+      throw new NotFoundError("No problems found");
     }
 
-    /**
-     * 
-     * @param difficulty
-     * @returns problems by difficulty
-     */
+    return problems;
+  }
 
-    async findByDifficulty(difficulty: "easy" | "medium" | "hard"): Promise<IProblem[]> {
-        const problems = await this.problemRepository.findByDifficulty!(difficulty);
-        if(problems.length === 0){
-            throw new NotFoundError(`No problems found with difficulty: ${difficulty}`);
-        }
-        return problems;
+  async searchProblems(query: string): Promise<IProblem[]> {
+    if (!query || query.trim() === "") {
+      throw new BadRequestError("Search query cannot be empty");
     }
-
-    /**
-     * 
-     * @param query
-     * @returns searched problems
-     * 
-     */
-    async searchProblems(query: string): Promise<IProblem[]> {
-        if(!query || query.trim() === ''){
-            throw new BadRequestError('Search query cannot be empty');
-        }
-
-        return await this.problemRepository.searchProblems(query);
-    }
+    return this.problemRepository.searchProblems(query);
+  }
 }

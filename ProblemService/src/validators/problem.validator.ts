@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createProblemSchema = z.object({
     title: z.string().min(1),
     description: z.string().min(1),
-    difficulty: z.enum(["Easy", "Medium", "Hard"]),
+    difficulty: z.enum(["easy", "medium", "hard"]),
     editorial: z.string().optional(),
     testcases: z.array(z.object({
         input: z.string().min(1),
@@ -14,7 +14,7 @@ export const createProblemSchema = z.object({
 export const updateProblemSchema = z.object({
     title: z.string().min(1).optional(),
     description: z.string().min(1).optional(),
-    difficulty: z.enum(["Easy", "Medium", "Hard"]).optional(),
+    difficulty: z.enum(["easy", "medium", "hard"]).optional(),
     editorial: z.string().optional(),
     testcases: z.array(z.object({
         input: z.string().min(1),

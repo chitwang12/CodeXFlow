@@ -5,12 +5,14 @@ export interface IProblemRepository {
     createProblem(problem: Partial<IProblem>): Promise<IProblem>;
     getProblemById(id: string): Promise<IProblem | null>;
     getAllProblems(): Promise<IProblem[]>;
-    updateProblem(id: string, update: Partial<IProblem>): Promise<IProblem | null>;
+    updateProblem(
+      id: string,
+      updateData: Partial<IProblem>
+    ): Promise<IProblem | null>;
     deleteProblem(id: string): Promise<boolean>;
-    findByDifficulty?(difficulty: "easy" | "medium" | "hard"): Promise<IProblem[]>;
+    findByDifficulty(difficulty: "Easy" | "Medium" | "Hard"): Promise<IProblem[]>;
     searchProblems(query: string): Promise<IProblem[]>;
-}
-
+  }
 
 export class ProblemRepository implements IProblemRepository {
 
@@ -20,20 +22,16 @@ export class ProblemRepository implements IProblemRepository {
             description: problem.description,
             difficulty: problem.difficulty,
             tags: problem.tags || [],
-            editorial: problem.editorial || '',
+            editorial: problem.editorial ,
             testcases: problem.testcases || []
         });
         logger.info(`Problem created with ID: ${newProblem._id}`);
         return newProblem;
     }
 
-    async getProblemById(id: string): Promise<IProblem> {
-        const foundProblem = await ProblemModel.findById(id).exec();
-        if (!foundProblem) {
-            throw new Error('Problem not found');
-        }
-        return foundProblem;
-    }
+    async getProblemById(id: string): Promise<IProblem | null> {
+        return await ProblemModel.findById(id).exec();
+      }      
 
     async getAllProblems(): Promise<IProblem[]> {
         const allProblems = await ProblemModel.find();
@@ -49,11 +47,11 @@ export class ProblemRepository implements IProblemRepository {
         const result = await ProblemModel.findByIdAndDelete(id).exec();
         return result ? true : false;
     }
-
-
-    async findByDifficulty(difficulty: "easy" | "medium" | "hard"): Promise<IProblem[]> {
-        return await ProblemModel.find({ difficulty }).sort({ createdAt: -1 }).exec();
+    
+    async findByDifficulty(difficulty: "Easy" | "Medium" | "Hard"): Promise<IProblem[]> {
+        return ProblemModel.find({ difficulty });
     }
+
 
     async searchProblems(query: string): Promise<IProblem[]> {
         return await ProblemModel.find({

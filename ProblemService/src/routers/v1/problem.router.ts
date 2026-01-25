@@ -137,3 +137,6 @@ problemRouter.put(
   updateProblemHandler
 );
 problemRouter.delete("/:id", deleteProblemHandler);
+
+
+export default problemRouter;
