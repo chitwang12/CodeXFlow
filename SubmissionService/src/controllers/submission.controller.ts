@@ -88,4 +88,21 @@ export class SubmissionController {
                 data: updatedSubmission,
             });
         };
+
+
+         getSubmissionData = async (req:Request, res:Response, next:NextFunction) => {
+            const { id } = req.params;
+            logger.info("Get submission data request received", { submissionId: id });
+
+            const submissionData = await this.submissionService.getSubmissionDataByService(id as string);
+
+            logger.info("Fetched submission data successfully", { submissionId: id });
+
+            res.status(200).json({
+                success: true,
+                message: "Submission data fetched successfully",
+                data: submissionData,
+            });
+            
+        };
 }

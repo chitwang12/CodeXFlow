@@ -8,6 +8,7 @@ export interface ISubmissionRepository {
     findSubmissionbyProblemId(problemId: string): Promise<ISubmission[]>;
     deleteById(id: string): Promise<boolean>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<ISubmission | null>;
+    getSubmissionDataRep(id: string): Promise<ISubmission | null>;
 }
 
 export class SubmissionRepository implements ISubmissionRepository{
@@ -45,5 +46,13 @@ export class SubmissionRepository implements ISubmissionRepository{
         );
         logger.info(`Updated submission status for ID: ${id} to ${status}`);
         return updatedSubmission;
+    }
+
+    async getSubmissionDataRep(id: string): Promise<ISubmission | null> {
+        const result = await Submission.findOne({
+            _id: id
+        });
+
+        return result;
     }
 }

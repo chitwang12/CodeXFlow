@@ -80,3 +80,25 @@ export async function getProblemById(
         throw err;
     });
 }
+
+
+export async function initProblemService(): Promise<void> {
+    try {
+        await retry(
+            async () => {
+                await problemClient.get("/ping/health");
+            },
+            {
+                retries: 3,
+                delayMs: 1000,
+            }
+        );
+
+        problemServiceLogger.info("::::::::::::: Problem Service Initialized Successfully ::::::::::::::");
+    } catch (err) {
+        problemServiceLogger.warn(
+            "Problem Service not reachable at startup"
+        );
+    }
+}
+

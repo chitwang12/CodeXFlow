@@ -8,8 +8,8 @@ type ServerConfig = {
     RabbitMQ_QUEUE_NAME?: string,
     RabbitMQ_EXCHANGE_NAME?: string;
     RabbitMQ_ROUTING_KEY?: string;
-    Problem_Service: string;
-
+    Problem_Service: string; 
+    JWT_SECRET?: string;   
 }
 
 function loadEnv() {
@@ -26,5 +26,7 @@ export const serverConfig: ServerConfig = {
     RabbitMQ_EXCHANGE_NAME: process.env.RABBITMQ_EXCHANGE_NAME || "submission.exchange",
     RabbitMQ_ROUTING_KEY: process.env.RABBITMQ_ROUTING_KEY || "submission.created",
     RabbitMQ_QUEUE_NAME: process.env.RABBITMQ_QUEUE_NAME || 'submissions_queue',
-    Problem_Service: process.env.PROBLEM_SERVICE_URL || 'http://localhost:4000/api/v1/problems'
+    Problem_Service: process.env.PROBLEM_SERVICE_URL || 'http://localhost:3000/api/v1/problems',
+    JWT_SECRET: process.env.JWT_SECRET
+    
 };

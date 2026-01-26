@@ -7,14 +7,18 @@ import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import { connectDB } from './config/db.config';
 import { RabbitMQ } from './messaging/rabbitMq.connection';
+import cors from 'cors';
+import { attachUserContext } from './middlewares/context.middleware';
+import { initProblemService } from './api/problem.client';
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 /**
  * Registering all the routers and their corresponding routes with out app server object.
  */
-
+app.use(attachUserContext)
 app.use(attachCorrelationIdMiddleware);
 app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router); 
@@ -30,7 +34,9 @@ app.use(genericErrorHandler);
 
 app.listen(serverConfig.PORT, async () => {
     await connectDB();
-    await RabbitMQ.init();
+    await RabbitMQ.initialize();
+    await RabbitMQ.getChannel();
+    await initProblemService();
     logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
 });

@@ -11,6 +11,7 @@ export interface ISubmissionService {
     getSubmissionsByProblemId(problemId: string): Promise<ISubmission[]>;
     deleteSubmissionById(id: string): Promise<boolean>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<ISubmission | null>;
+    getSubmissionDataByService(id: string): Promise<any>;
 }
 
 
@@ -101,5 +102,13 @@ export class SubmissionService implements ISubmissionService {
             throw new NotFoundError('Submission not found');
         }
         return submission
+    }
+
+    async getSubmissionDataByService(id: string): Promise<any> {
+        const submissionData = await this.submissionRepository.getSubmissionDataRep(id);
+        if(!submissionData){
+            throw new NotFoundError('Submission not found');
+        }
+        return submissionData;
     }
 }
