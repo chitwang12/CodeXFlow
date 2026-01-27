@@ -39,11 +39,7 @@ export class SubmissionRepository implements ISubmissionRepository{
     }
 
     async updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<ISubmission | null> {
-        const updatedSubmission = await Submission.findByIdAndUpdate(
-            id,
-            { status },
-            { new: true }
-        );
+        const updatedSubmission = await Submission.findByIdAndUpdate(id, { status }, { new: true });
         logger.info(`Updated submission status for ID: ${id} to ${status}`);
         return updatedSubmission;
     }

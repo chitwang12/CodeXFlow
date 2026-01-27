@@ -1,50 +1,84 @@
-import { connect, Channel } from 'amqplib';
+import * as amqp from 'amqplib';
+import { Channel } from 'amqplib';
 import logger from '../config/logger.config';
 import { rabbitmqConfig } from '../config/rabbitMq.config';
 
 export class RabbitMQ {
-    private static channel: Channel | null = null;
+  private static channel: Channel | null = null;
 
-    static async initialize() {
-        let attempt = 0;
-        const maxRetries = 5;
-        const delayMs = rabbitmqConfig.connection.reconnectDelayMs;
+  static async initialize(): Promise<void> {
+    let attempt = 0;
 
-        while (attempt < maxRetries) {
-            try {
-                attempt++;
-                logger.info(`Connecting to RabbitMQ (attempt ${attempt}/${maxRetries})...`);
-                const connection = await connect(rabbitmqConfig.connection.url, {
-                    heartbeat: rabbitmqConfig.connection.heartbeatSeconds,
-                });
+    while (attempt < 5) {
+      try {
+        attempt++;
+        logger.info(`Connecting to RabbitMQ (attempt ${attempt})`);
 
-                this.channel = await connection.createChannel();
+        // IMPORTANT: do NOT type connection
+        const connection = await amqp.connect(
+          rabbitmqConfig.connection.url,
+          { heartbeat: rabbitmqConfig.connection.heartbeatSeconds }
+        );
 
-                await this.channel.assertExchange(
-                    rabbitmqConfig.exchange.submissions,
-                    "direct",
-                    { durable: true }
-                );
+        const channel = await connection.createChannel();
 
-                logger.info("RabbitMQ producer initialized successfully");
-                return;
-            } catch (err) {
-                logger.error(`RabbitMQ connection failed on attempt ${attempt}: ${err}`);
-                if (attempt < maxRetries) {
-                    logger.warn(`Reconnecting to RabbitMQ in ${delayMs}ms...`);
-                    await new Promise(res => setTimeout(res, delayMs));
-                } else {
-                    logger.error("RabbitMQ connection failed after maximum retries.");
-                    throw err;
-                }
-            }
-        }
+        //Exchanges and Queues
+        await channel.assertExchange(
+          rabbitmqConfig.exchange.submissions,
+          'direct',
+          { durable: true }
+        );
+
+        await channel.assertExchange(
+            rabbitmqConfig.exchange.submissionResult,
+            'direct',
+            { durable: true }
+        )
+        
+        //Queue
+        await channel.assertQueue(
+          rabbitmqConfig.queues.submissionEvaluate,
+          { durable: true }
+        );
+
+        await channel.assertQueue(
+            rabbitmqConfig.queues.submissionResult,
+            { durable: true }
+        );
+
+        await channel.bindQueue(
+          rabbitmqConfig.queues.submissionEvaluate,
+          rabbitmqConfig.exchange.submissions,
+          rabbitmqConfig.routingKeys.submissionCreated
+        );
+
+        await channel.bindQueue(
+            rabbitmqConfig.queues.submissionResult,
+            rabbitmqConfig.exchange.submissionResult,
+            rabbitmqConfig.routingKeys.submissionEvaluated
+          );
+
+        await channel.prefetch(rabbitmqConfig.consumer.prefetch);
+
+        RabbitMQ.channel = channel;
+
+        logger.info(
+          `RabbitMQ connected | exchange=${rabbitmqConfig.exchange.submissions} queue=${rabbitmqConfig.queues.submissionEvaluate}`
+        );
+        return;
+      } catch (err) {
+        logger.error('RabbitMQ connection failed', err);
+        await new Promise(res => setTimeout(res, 3000));
+      }
     }
 
-    static getChannel(): Channel {
-        if (!this.channel) {
-            throw new Error("RabbitMQ not initialized");
-        }
-        return this.channel;
+    throw new Error('RabbitMQ initialization failed');
+  }
+
+  static getChannel(): Channel {
+    if (!this.channel) {
+      throw new Error('RabbitMQ not initialized');
     }
+    return this.channel;
+  }
 }

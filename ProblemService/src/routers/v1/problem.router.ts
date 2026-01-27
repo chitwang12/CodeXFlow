@@ -131,7 +131,7 @@ problemRouter.get("/:id", getProblemHandler);
  * * @returns Updated Problem Object
  * 
  */
-problemRouter.put(
+problemRouter.patch(
   "/:id",
   validateRequestBody(updateProblemSchema),
   updateProblemHandler

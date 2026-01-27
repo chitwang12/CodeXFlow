@@ -8,6 +8,7 @@ import { attachCorrelationIdMiddleware } from './middlewares/correlation.middlew
 import { connectDB } from './config/db.config';
 import { RabbitMQ } from './messaging /rabbitMq.connection';
 import { startSubmissionConsumer } from './messaging /submission.consumer';
+import { pullALLImages } from './utils/containers/pullImage.util';
 const app = express();
 
 app.use(express.json());
@@ -34,8 +35,9 @@ app.listen(serverConfig.PORT, async () => {
     await RabbitMQ.initialize();
     await RabbitMQ.getChannel();
     await startSubmissionConsumer();
+    await pullALLImages();
 
-    
+
     logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
 });

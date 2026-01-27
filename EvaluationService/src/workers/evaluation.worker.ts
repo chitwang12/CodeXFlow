@@ -18,64 +18,117 @@ interface EvaluationPayload {
   };
 }
 
+type SubmissionStatus = "completed" | "attempted" | "failed";
+
 export class EvaluationWorker {
 
   static async handle(data: EvaluationPayload, traceId?: string) {
     try {
-        logger.info(`Processing Evaluation | traceId=${traceId} submissionId=${data.submissionId}`);
-        const testCasesRunnerPromise = data.problem.testcases.map(testCase =>
-          runCode({
-            code: data.code,
-            language: data.language,
-            timeout: LANGUAGE_CONFIG[data.language].timeout,
-            imageName: LANGUAGE_CONFIG[data.language].imageName,
-            input: testCase.input
-          })
-        );
-    
-        const results: EvaluationResult[] = await Promise.all(testCasesRunnerPromise);
-        const output = EvaluationWorker.matchTestCasesWithResults(
-          data.problem.testcases,
-          results
-        );
-    
-        logger.info(`Evaluation completed | traceId=${traceId} submissionId=${data.submissionId}`);
-        return output;
-      }  catch (error: any) {
-        logger.error(`Evaluation Worker failed | traceId=${traceId} submissionId=${data.submissionId} ` + `error=${error?.message}`);
-        logger.error(error?.stack);
-        throw new InternalServerError('Evaluation Worker failed to process the submission.');
+      logger.info(
+        `Processing Evaluation | traceId=${traceId} submissionId=${data.submissionId}`
+      );
+
+      const testCasesRunnerPromise = data.problem.testcases.map(testCase =>
+        runCode({
+          code: data.code,
+          language: data.language,
+          timeout: LANGUAGE_CONFIG[data.language].timeout,
+          imageName: LANGUAGE_CONFIG[data.language].imageName,
+          input: testCase.input
+        })
+      );
+
+      const results: EvaluationResult[] = await Promise.all(testCasesRunnerPromise);
+
+      const testcaseResults = EvaluationWorker.matchTestCasesWithResults(
+        data.problem.testcases,
+        results
+      );
+      const submissionStatus = EvaluationWorker.deriveSubmissionStatus(testcaseResults);
+
+      logger.info(
+        `Evaluation completed | traceId=${traceId} submissionId=${data.submissionId}`
+      );
+
+      return {
+        submissionId: data.submissionId,
+        traceId,
+        submissionStatus,
+        testcaseResults
+      };
+
+    } catch (error: any) {
+      logger.error(
+        `Evaluation Worker failed | traceId=${traceId} submissionId=${data.submissionId} error=${error?.message}`
+      );
+      logger.error(error?.stack);
+      throw new InternalServerError(
+        'Evaluation Worker failed to process the submission.'
+      );
     }
-}
+  }
 
-
-static matchTestCasesWithResults(testcases:TestCase[],results:EvaluationResult[]){
-    
-    const output:Record<string,string> = {};
-    if(results.length !== testcases.length){
-        console.log("WA");
-        return;
+  // ✅ Always returns or throws
+  static matchTestCasesWithResults(
+    testcases: TestCase[],
+    results: EvaluationResult[]
+  ): Record<string, string> {
+  
+    if (results.length !== testcases.length) {
+      throw new Error(
+        `Testcase count mismatch: expected=${testcases.length}, got=${results.length}`
+      );
     }
-
-    testcases.map((testcase,index)=>{
-        let val= "";
-        if(results[index].status ==="time_limit_exceeded"){
-           val="TLE";
-        }
-        else if(results[index].status === "failed"){
-            val="Error";
-        }else{
-            if(results[index].output === testcase.output){
-                val="AC";
-            }
-            else{
-                val="WA";
-            }
-        }
-
-        console.log("value of testcases",val);
-        output[testcase._id] = val;
+  
+    const output: Record<string, string> = {};
+  
+    testcases.forEach((testcase, index) => {
+      let val: string;
+  
+      const actual = EvaluationWorker.normalize(results[index].output);
+      const expected = EvaluationWorker.normalize(testcase.output);
+  
+      logger.info("Testcase comparison", {
+        testcaseId: testcase._id,
+        input: JSON.stringify(testcase.input),
+        expected: JSON.stringify(expected),
+        actual: JSON.stringify(actual)
+      });
+  
+      if (results[index].status === "time_limit_exceeded") {
+        val = "TLE";
+      } else if (results[index].status === "failed") {
+        val = "Error";
+      } else {
+        val = actual === expected ? "AC" : "WA";
+      }
+  
+      output[testcase._id] = val;
     });
+  
     return output;
-}
+  }
+  
+  
+  static deriveSubmissionStatus(
+    testcaseResults: Record<string, string>
+  ): SubmissionStatus {
+
+    const values = Object.values(testcaseResults);
+
+    const allAccepted = values.every(v => v === "AC");
+    const someAccepted = values.some(v => v === "AC");
+
+    if (allAccepted) return "completed";
+    if (someAccepted) return "attempted";
+    return "failed";
+  }
+
+  static normalize(str?: string): string {
+    if (!str) return "";
+    return str
+      .replace(/\r\n/g, "\n")   // Windows → Unix
+      .replace(/\s+/g, " ")     // collapse spaces/newlines
+      .trim();                  // remove leading/trailing space
+  }
 }

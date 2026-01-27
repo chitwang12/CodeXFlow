@@ -3,6 +3,9 @@ import { RabbitMQ } from './rabbitMq.connection';
 import logger from '../config/logger.config';
 import { rabbitmqConfig } from '../config/rabbitMq.config';
 import { EvaluationWorker } from '../workers/evaluation.worker';
+import { InternalServerError } from '../utils/errors/app.error';
+import { publishSubmissionEvaluated } from './publishSubmissionEvaluated';
+import { SubmissionEvaluatedEvent } from "../interfaces/Submission.Evaluated.Event"
 
 export async function startSubmissionConsumer() {
   const channel = RabbitMQ.getChannel();
@@ -20,7 +23,21 @@ export async function startSubmissionConsumer() {
         traceId = payload.traceId || 'no-trace-id';
         logger.info('Received submission message', { traceId, submissionId: payload.submissionId });
 
-        await EvaluationWorker.handle(payload, traceId);
+        let res = await EvaluationWorker.handle(payload, traceId);
+        if(!res){
+            logger.error('Evaluation Worker returned no result', { traceId, submissionId: payload.submissionId });
+            throw new InternalServerError('Evaluation Worker failed to process the submission.');
+        }
+        const evaluationEvent: SubmissionEvaluatedEvent = {
+            eventType: "SUBMISSION_EVALUATED",
+            submissionId: res.submissionId,
+            submissionStatus: res.submissionStatus,
+            testcaseResults: res.testcaseResults,
+            traceId,
+            evaluatedAt: new Date().toISOString()
+          };
+
+        await publishSubmissionEvaluated(evaluationEvent);
 
         channel.ack(msg);
         logger.info(`Message ACKED | traceId: ${traceId} and submissionId=${payload.submissionId}`);

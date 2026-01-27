@@ -22,15 +22,28 @@ export class RabbitMQ {
 
         const channel = await connection.createChannel();
 
+        //Exchanges and Queues
         await channel.assertExchange(
           rabbitmqConfig.exchange.submissions,
           'direct',
           { durable: true }
         );
 
+        await channel.assertExchange(
+            rabbitmqConfig.exchange.submissionResult,
+            'direct',
+            { durable: true }
+        )
+        
+        //Queue
         await channel.assertQueue(
           rabbitmqConfig.queues.submissionEvaluate,
           { durable: true }
+        );
+
+        await channel.assertQueue(
+            rabbitmqConfig.queues.submissionResult,
+            { durable: true }
         );
 
         await channel.bindQueue(
@@ -38,6 +51,12 @@ export class RabbitMQ {
           rabbitmqConfig.exchange.submissions,
           rabbitmqConfig.routingKeys.submissionCreated
         );
+
+        await channel.bindQueue(
+            rabbitmqConfig.queues.submissionResult,
+            rabbitmqConfig.exchange.submissionResult,
+            rabbitmqConfig.routingKeys.submissionEvaluated
+          );
 
         await channel.prefetch(rabbitmqConfig.consumer.prefetch);
 

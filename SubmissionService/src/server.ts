@@ -10,6 +10,8 @@ import { RabbitMQ } from './messaging/rabbitMq.connection';
 import cors from 'cors';
 import { attachUserContext } from './middlewares/context.middleware';
 import { initProblemService } from './api/problem.client';
+import { startSubmissionResultConsumer } from './messaging/submissionResult.consumer';
+
 const app = express();
 
 app.use(express.json());
@@ -37,6 +39,7 @@ app.listen(serverConfig.PORT, async () => {
     await RabbitMQ.initialize();
     await RabbitMQ.getChannel();
     await initProblemService();
+    await startSubmissionResultConsumer();
     logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
     logger.info(`Press Ctrl+C to stop the server.`);
 });
