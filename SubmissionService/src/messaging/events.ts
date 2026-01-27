@@ -5,6 +5,7 @@ export interface SubmissionCreatedEvent {
     problem: IProblemDetails;
     language: string;
     code: string;
+    traceId?: string;
     userId: string;
     createdAt: string;
 }

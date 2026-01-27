@@ -4,6 +4,8 @@ import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
 import { getProblemById } from "../api/problem.client";
 import logger from "../config/logger.config";
 import { publishSubmissionCreated } from "../messaging/submission.publisher";
+import { uuid } from "uuidv4";
+
 
 export interface ISubmissionService {
     createSubmission(submission: Partial<ISubmission>): Promise<ISubmission>;
@@ -52,17 +54,20 @@ export class SubmissionService implements ISubmissionService {
         // Store the submission in the Submission DB
         const newSubmission = await this.submissionRepository.createSubmission(submission);
 
+        let traceId = uuid();
         //Submission to RabbitMq , for Async processing
-       const jobId =  await publishSubmissionCreated({
+        await publishSubmissionCreated({
             submissionId: newSubmission._id.toString(),
             problem,
             code: newSubmission.code,
             language: newSubmission.language,
             userId: "",
-            createdAt: ""
+            createdAt: "",
+            traceId: traceId
+
         });
 
-        logger.info(`Published submission created event for Submission ID: ${newSubmission._id} with Job ID: ${jobId}`);
+        logger.info(`Published submission created event for Submission ID: ${newSubmission._id} with traceId ${traceId}`);
         return newSubmission;
     }
 

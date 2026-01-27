@@ -50,7 +50,7 @@ export async function getProblemById(
                     "Problem service returned unsuccessful response"
                 );
             }
-
+            logger.info("Fetched problem details", { problemId });
             return response.data.data;
         },
         {

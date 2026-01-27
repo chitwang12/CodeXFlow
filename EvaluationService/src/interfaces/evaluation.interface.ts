@@ -1,0 +1,33 @@
+export interface TestCase{
+    _id:string,
+    input:string,
+    output:string
+}
+
+
+export interface Problem{
+    id:string,
+    title:string,
+    descripition:string,
+    difficulty:string,
+    editorial?:string,
+    testcases:TestCase[],
+    createdAt:string,
+    updatedAt:string
+}
+
+
+
+
+export interface EvaluationJob{
+    submissionId:string;
+    code:string,
+    language:"python"| "cpp",
+    problem:Problem,
+    userId:string
+}
+
+export interface EvaluationResult{
+    status:string,
+    output:string| undefined
+}

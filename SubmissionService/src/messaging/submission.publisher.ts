@@ -3,18 +3,17 @@ import { rabbitmqConfig } from "../config/rabbitMq.config";
 import { retry } from "../utils/helpers/retry";
 import logger from "../config/logger.config";
 import { SubmissionCreatedEvent } from "./events";
+import { uuid } from "uuidv4";
 
-export async function publishSubmissionCreated(
-    event: SubmissionCreatedEvent
-): Promise<void> {
+export async function publishSubmissionCreated(event: SubmissionCreatedEvent): Promise<void> {
     const channel = RabbitMQ.getChannel();
 
     await retry(
         async () => {
-            const published = channel.publish(
-                rabbitmqConfig.exchange.submissions,
-                rabbitmqConfig.routingKeys.submissionCreated,
-                Buffer.from(JSON.stringify(event)),
+            if(!event.traceId) 
+                event.traceId = uuid();
+            
+            const published = channel.publish(rabbitmqConfig.exchange.submissions, rabbitmqConfig.routingKeys.submissionCreated, Buffer.from(JSON.stringify(event)),
                 {
                     persistent: rabbitmqConfig.publish.persistent,
                 }
@@ -30,7 +29,5 @@ export async function publishSubmissionCreated(
         }
     );
 
-    logger.info("Submission event published", {
-        submissionId: event.submissionId,
-    });
+    logger.info(`Submission event published submissionId: ${event.submissionId} with traceId: ${event.traceId}`);
 }

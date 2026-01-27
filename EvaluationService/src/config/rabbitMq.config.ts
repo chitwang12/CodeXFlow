@@ -1,14 +1,18 @@
 export const rabbitmqConfig = {
     exchange: {
         submissions: "submissions.exchange",
+        submission_result: "submission.result.exchange",
+
     },
 
     queues: {
         submissionEvaluate: "submissions.evaluate.queue",
+        submission_result_queue: "submissions.result.queue",
     },
 
     routingKeys: {
         submissionCreated: "submission.created",
+        submissionResult: "submission.result",
     },
 
     connection: {
