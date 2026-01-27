@@ -6,6 +6,8 @@ import { SubmissionService } from "../services/submission.service";
 import { SubmissionRepository } from "../repository/submission.repository";
 import { mapEvaluatedToDomainStatus } from "../utils/mappers/submissionStatus.mapper";
 import { InternalServerError } from "../utils/errors/app.error";
+import { notifySubmissionUpdate } from "../webSockets/ws.publisher";
+
 
 export async function startSubmissionResultConsumer() {
   const channel = RabbitMQ.getChannel();
@@ -34,18 +36,14 @@ export async function startSubmissionResultConsumer() {
           event.submissionId,
           domainStatus
         );
+        //Notify the frontEnd that the WS is listening
+        notifySubmissionUpdate(event.submissionId, { submissionId: event.submissionId, status: "completed",result: "failed"});
         // 2️⃣ ACK only after success
         channel.ack(msg);
 
-        logger.info(
-          "[SubmissionService] Submission updated & ACKed",
-          { submissionId: event.submissionId }
-        );
+        logger.info("[SubmissionService] Submission updated & Acked",{ submissionId: event.submissionId });
       } catch (err) {
-        logger.error(
-          "[SubmissionService] Failed to process submission result",
-          err
-        );
+        logger.error("[SubmissionService] Failed to process submission result", err);
 
         //DO NOT ACK
         // RabbitMQ will retry
