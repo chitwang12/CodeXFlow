@@ -1,0 +1,23 @@
+[
+    {
+      "problemTitle": "Valid Palindrome",
+      "language": "python",
+      "code": "def isPalindrome(s): s=''.join(c.lower() for c in s if c.isalnum()); return s==s[::-1]"
+    },
+    {
+      "problemTitle": "Valid Palindrome II",
+      "language": "python",
+      "code": "def validPalindrome(s):\n def chk(l,r): return s[l:r+1]==s[l:r+1][::-1]\n l,r=0,len(s)-1\n while l<r:\n  if s[l]!=s[r]: return chk(l+1,r) or chk(l,r-1)\n  l+=1; r-=1\n return True"
+    },
+    {
+      "problemTitle": "Reverse String",
+      "language": "python",
+      "code": "def reverseString(s): return s[::-1]"
+    },
+    {
+      "problemTitle": "Reverse Vowels of a String",
+      "language": "python",
+      "code": "def reverseVowels(s): v=set('aeiouAEIOU');s=list(s);l,r=0,len(s)-1\n while l<r:\n  while l<r and s[l] not in v: l+=1\n  while l<r and s[r] not in v: r-=1\n  s[l],s[r]=s[r],s[l]; l+=1; r-=1\n return ''.join(s)"
+    }
+  ]
+  

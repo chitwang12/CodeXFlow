@@ -36,11 +36,10 @@ const problemClient: AxiosInstance = axios.create({
     timeout: 3000,
 });
 
-export async function getProblemById(
-    problemId: string
-): Promise<IProblemDetails> {
+export async function getProblemById(problemId: string): Promise<IProblemDetails> {
     return retry(
         async () => {
+            logger.info("Calling Problem Service to get problem details for Problem Id : ", { problemId });
             const response = await problemClient.get<IProblemResponse>(
                 `/problems/${problemId}`
             );
@@ -50,7 +49,7 @@ export async function getProblemById(
                     "Problem service returned unsuccessful response"
                 );
             }
-            logger.info("Fetched problem details", { problemId });
+            logger.info("Request Completed for Problem Service for Problem Id", { problemId });
             return response.data.data;
         },
         {
@@ -68,19 +67,14 @@ export async function getProblemById(
         }
     ).catch((err) => {
         if (axios.isAxiosError(err)) {
-            problemServiceLogger.error(
-                "Problem service request failed",
-                {
-                    status: err.response?.status,
-                    problemId,
-                }
-            );
-            
+            problemServiceLogger.error("Problem service request failed", {
+                status: err.response?.status,
+                problemId,
+            });
         }
         throw err;
     });
 }
-
 
 export async function initProblemService(): Promise<void> {
     try {
@@ -94,11 +88,10 @@ export async function initProblemService(): Promise<void> {
             }
         );
 
-        problemServiceLogger.info("::::::::::::: Problem Service Initialized Successfully ::::::::::::::");
-    } catch (err) {
-        problemServiceLogger.warn(
-            "Problem Service not reachable at startup"
+        problemServiceLogger.info(
+            "::::::::::::: Problem Service Initialized Successfully ::::::::::::::"
         );
+    } catch (err) {
+        problemServiceLogger.warn("Problem Service not reachable at startup");
     }
 }
-

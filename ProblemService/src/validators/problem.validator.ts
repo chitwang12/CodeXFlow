@@ -4,12 +4,16 @@ export const createProblemSchema = z.object({
     title: z.string().min(1),
     description: z.string().min(1),
     difficulty: z.enum(["easy", "medium", "hard"]),
+    tags: z.array(z.string()).optional(),
     editorial: z.string().optional(),
-    testcases: z.array(z.object({
-        input: z.string().min(1),
-        output: z.string().min(1)
-    }))
-});
+    testcases: z.array(
+        z.object({
+          input: z.string().trim().min(1, "Test case input is required"),
+          output: z.string().trim().min(1, "Test case output is required")
+        })
+      ).min(1, "At least one test case is required")
+  });
+  
 
 export const updateProblemSchema = z.object({
     title: z.string().min(1).optional(),

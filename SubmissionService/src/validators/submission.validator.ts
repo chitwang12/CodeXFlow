@@ -33,3 +33,8 @@ export const submissionQuerySchema = z.object({
     limit: z.string().transform(val => parseInt(val)).pipe(z.number().min(1).max(100)).optional(),
     page: z.string().transform(val => parseInt(val)).pipe(z.number().min(1)).optional()
 });
+
+//Params schema Validation for problemId
+export const problemIdParamSchema = z.object({
+    problemId: z.string().length(24, "Invalid problem id"),
+  });

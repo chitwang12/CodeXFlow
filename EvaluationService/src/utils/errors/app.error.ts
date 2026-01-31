@@ -141,3 +141,42 @@ export class NotImplementedError implements AppError {
         this.name = "NotImplementedError";
     }
 }
+
+
+/**
+ * * Represents a Service Unavailable error (HTTP 503).
+ * This error is typically used to indicate that the server is currently unable to handle the request
+ * due to temporary overloading or maintenance of the server.
+ * @class ServiceUnavailableError
+ * @implements {AppError}
+ * /
+ */
+export class ServiceUnavailableError implements AppError {
+    statusCode: number;
+    message: string;
+    name: string;
+    constructor(message: string) {
+        this.statusCode = 503;
+        this.message = message;
+        this.name = "ServiceUnavailableError";
+    }
+}
+
+
+/** 
+ * 
+ * Represents a Duplicate record Error 
+ * @class DuplicateRecordError
+ * @implements {AppError}
+ * 
+ */
+export class DuplicateRecordError implements AppError {
+    statusCode: number;
+    message: string;
+    name: string;
+    constructor(message: string) {
+        this.statusCode = 409;
+        this.message = message;
+        this.name = "DuplicateRecordError";
+    }
+}

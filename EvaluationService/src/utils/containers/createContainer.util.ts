@@ -8,7 +8,7 @@ export interface CreateContainerOptions {
 }
 
 export async function createNewDockerContainer(
-  options: CreateContainerOptions
+  options: CreateContainerOptions, traceId?: string
 ) {
   try {
     const docker = new Docker();
@@ -31,7 +31,7 @@ export async function createNewDockerContainer(
       }
     });
 
-    logger.info(`Container created with id ${container.id}`);
+    logger.info(`Container created with id ${container.id} for traceId=${traceId}`);
     return container;
   } catch (error) {
     logger.error("Error creating container", error);

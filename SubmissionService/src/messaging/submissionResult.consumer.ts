@@ -15,7 +15,7 @@ export async function startSubmissionResultConsumer() {
   await channel.consume( rabbitmqConfig.queues.submissionResult, async (msg) => {
       if (!msg || msg.content == null) 
       {
-        logger.warn("[SubmissionService] Received null message, skipping processing");
+        logger.warn("[Submission Service] Received null message, skipping processing for submission result", {traceId: msg ? msg.properties.correlationId :""});
         throw new InternalServerError("Received null message");
     
       }
@@ -24,7 +24,7 @@ export async function startSubmissionResultConsumer() {
         msg.content.toString()
       );
 
-      logger.info("[SubmissionService] SUBMISSION_EVALUATED received", {submissionId: event.submissionId,status: event.submissionStatus,traceId: event.traceId });
+      logger.info("[Submission Service] SUBMISSION_EVALUATED received", {submissionId: event.submissionId,status: event.submissionStatus,traceId: event.traceId });
 
       try {
       //Update the submission status in the DB

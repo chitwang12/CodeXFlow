@@ -6,52 +6,96 @@ import { EvaluationWorker } from '../workers/evaluation.worker';
 import { InternalServerError } from '../utils/errors/app.error';
 import { publishSubmissionEvaluated } from './publishSubmissionEvaluated';
 import { SubmissionEvaluatedEvent } from "../interfaces/Submission.Evaluated.Event"
+import { EvaluationExecutionModel } from '../models/evaluation_executions_model';
 
 export async function startSubmissionConsumer() {
   const channel = RabbitMQ.getChannel();
 
-  await channel.consume(rabbitmqConfig.queues.submissionEvaluate, async (msg: ConsumeMessage | null) => {
+  await channel.consume(rabbitmqConfig.queues.submissionEvaluate,async (msg: ConsumeMessage | null) => {
+      if (!msg) return;
+
       
-    if (!msg) {
-        logger.info('Received null message, skipping processing');
-        return;
-    }
-    let traceId : string = '';
+      let traceId = "";
+
       try {
         const payload = JSON.parse(msg.content.toString());
+        traceId = payload.traceId || "no-trace-id";
 
-        traceId = payload.traceId || 'no-trace-id';
-        logger.info('Received submission message', { traceId, submissionId: payload.submissionId });
+        logger.info("Received submission message", {
+          traceId,
+          submissionId: payload.submissionId,
+        });
 
-        let res = await EvaluationWorker.handle(payload, traceId);
-        if(!res){
-            logger.error('Evaluation Worker returned no result', { traceId, submissionId: payload.submissionId });
-            throw new InternalServerError('Evaluation Worker failed to process the submission.');
-        }
-        const evaluationEvent: SubmissionEvaluatedEvent = {
-            eventType: "SUBMISSION_EVALUATED",
-            submissionId: res.submissionId,
-            submissionStatus: res.submissionStatus,
-            testcaseResults: res.testcaseResults,
+        // 🔐 IDEMPOTENCY GATE
+        try {
+          await EvaluationExecutionModel.create({
+            submissionId: payload.submissionId,
+            status: "PROCESSING",
             traceId,
-            evaluatedAt: new Date().toISOString()
-          };
+            startedAt: new Date(),
+          });
+        } catch (err: any) {
+          if (err.code === 11000) {
+            logger.warn("Duplicate submission detected, skipping", {
+              traceId,
+              submissionId: payload.submissionId,
+            });
+
+            channel.ack(msg); // ACK the message to remove it from the queue
+            return;
+          }
+          throw err;
+        }
+
+        // Execute exactly once
+        const res = await EvaluationWorker.handle(payload, traceId);
+        if (!res) {
+          throw new InternalServerError("Evaluation failed");
+        }
+
+        const evaluationEvent: SubmissionEvaluatedEvent = {
+          eventType: "SUBMISSION_EVALUATED",
+          submissionId: res.submissionId,
+          submissionStatus: res.submissionStatus,
+          testcaseResults: res.testcaseResults,
+          traceId,
+          evaluatedAt: new Date().toISOString(),
+        };
 
         await publishSubmissionEvaluated(evaluationEvent);
 
-        channel.ack(msg);
-        logger.info(`Message ACKED | traceId: ${traceId} and submissionId=${payload.submissionId}`);
-      } catch (err) {
+        // Mark completed
+        try {
+          await EvaluationExecutionModel.updateOne(
+            { submissionId: payload.submissionId },
+            { status: "COMPLETED", completedAt: new Date() }
+          );
+        } catch (err) {
+          logger.warn("Failed to mark execution COMPLETED", {
+            err,
+            submissionId: payload.submissionId,
+          });
+        }
 
-        logger.error('Evaluation failed for traceId ', { err, traceId});
+        channel.ack(msg);
+        logger.info("Message ACKED", {
+          traceId,
+          submissionId: payload.submissionId,
+        });
+      } catch (err) {
+        logger.error("Evaluation failed", { err, traceId });
+
+        try {
+          await EvaluationExecutionModel.updateOne(
+            { submissionId: traceId },
+            { status: "FAILED", completedAt: new Date() }
+          );
+        } catch { }
 
         channel.nack(msg, false, false);
       }
     },
     { noAck: false }
   );
-
-  logger.info(
-    `Evaluation consumer attached to queue: ${rabbitmqConfig.queues.submissionEvaluate}`
-  );
 }
+

@@ -48,11 +48,12 @@ export class SubmissionController {
 
             const submissions = await this.submissionService.getSubmissionsByProblemId(problemId as string);
 
-            logger.info("Fetched submissions successfully", { problemId, count: submissions.length });
+            logger.info(`Fetched total ${submissions.length} submissions successfully for ${problemId}`);
 
             res.status(200).json({
                 success: true,
                 message: "Submissions fetched successfully",
+                TotalSubmissions: submissions.length,
                 data: submissions,
             });
         };

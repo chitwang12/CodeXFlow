@@ -1,0 +1,114 @@
+[
+    {
+      "title": "Valid Palindrome",
+      "description": "Given a string s, determine if it is a palindrome, considering only alphanumeric characters and ignoring cases.",
+      "difficulty": "easy",
+      "tags": ["String", "Two Pointers"],
+      "editorial": "Use two pointers and skip non-alphanumeric characters.",
+      "testcases": [
+        { "input": "A man, a plan, a canal: Panama", "output": "true" },
+        { "input": "race a car", "output": "false" }
+      ]
+    },
+    {
+      "title": "Valid Palindrome II",
+      "description": "Return true if the string can be a palindrome after deleting at most one character.",
+      "difficulty": "easy",
+      "tags": ["String", "Two Pointers"],
+      "editorial": "On mismatch, skip either left or right once.",
+      "testcases": [
+        { "input": "aba", "output": "true" },
+        { "input": "abca", "output": "true" },
+        { "input": "abc", "output": "false" }
+      ]
+    },
+    {
+      "title": "Reverse String",
+      "description": "Reverse the input string.",
+      "difficulty": "easy",
+      "tags": ["String", "Two Pointers"],
+      "editorial": "Swap characters from both ends.",
+      "testcases": [
+        { "input": "hello", "output": "olleh" },
+        { "input": "Hannah", "output": "hannaH" }
+      ]
+    },
+    {
+      "title": "Reverse Vowels of a String",
+      "description": "Reverse only the vowels in a string.",
+      "difficulty": "easy",
+      "tags": ["String", "Two Pointers"],
+      "editorial": "Use two pointers to swap vowels.",
+      "testcases": [
+        { "input": "hello", "output": "holle" },
+        { "input": "leetcode", "output": "leotcede" }
+      ]
+    },
+    {
+      "title": "Remove Vowels from a String",
+      "description": "Remove all vowels from the given string.",
+      "difficulty": "easy",
+      "tags": ["String"],
+      "editorial": "Filter out vowel characters.",
+      "testcases": [
+        { "input": "leetcodeisacommunityforcoders", "output": "ltcdscmmntyfrcdrs" },
+        { "input": "aeiou", "output": "" }
+      ]
+    },
+    {
+      "title": "Is Subsequence",
+      "description": "Check if string s is a subsequence of string t.",
+      "difficulty": "easy",
+      "tags": ["String", "Two Pointers"],
+      "editorial": "Advance pointer when characters match.",
+      "testcases": [
+        { "input": "abc|ahbgdc", "output": "true" },
+        { "input": "axc|ahbgdc", "output": "false" }
+      ]
+    },
+    {
+      "title": "Check if Sentence Is Pangram",
+      "description": "Check whether the sentence contains all letters of the English alphabet.",
+      "difficulty": "easy",
+      "tags": ["String", "HashSet"],
+      "editorial": "Use a set to track unique characters.",
+      "testcases": [
+        { "input": "thequickbrownfoxjumpsoverthelazydog", "output": "true" },
+        { "input": "leetcode", "output": "false" }
+      ]
+    },
+    {
+      "title": "Detect Capital",
+      "description": "Check whether capitalization is used correctly in a word.",
+      "difficulty": "easy",
+      "tags": ["String"],
+      "editorial": "Check capitalization patterns.",
+      "testcases": [
+        { "input": "USA", "output": "true" },
+        { "input": "FlaG", "output": "false" }
+      ]
+    },
+    {
+      "title": "First Unique Character in a String",
+      "description": "Find the index of the first non-repeating character.",
+      "difficulty": "easy",
+      "tags": ["String", "HashMap"],
+      "editorial": "Count frequency then scan.",
+      "testcases": [
+        { "input": "leetcode", "output": "0" },
+        { "input": "loveleetcode", "output": "2" }
+      ]
+    },
+    {
+      "title": "Longest Common Prefix",
+      "description": "Find the longest common prefix among an array of strings.",
+      "difficulty": "easy",
+      "tags": ["String"],
+      "editorial": "Compare characters column-wise.",
+      "testcases": [
+        { "input": "flower,flow,flight", "output": "fl" },
+        { "input": "dog,racecar,car", "output": "" }
+      ]
+    }
+  ]
+  

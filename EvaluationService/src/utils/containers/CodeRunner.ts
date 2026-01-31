@@ -12,7 +12,7 @@ export interface RunCodeOptions {
   input: string;
 }
 
-export async function runCode(options: RunCodeOptions) {
+export async function runCode(options: RunCodeOptions, traceId?: string | undefined) {
   const { code, language, timeout, imageName, input } = options;
 
   if (!allowListedLanguage.includes(language)) {
@@ -23,7 +23,7 @@ export async function runCode(options: RunCodeOptions) {
     imageName,
     cmdExecutable: commands[language](code, input),
     memoryLimit: 1024 * 1024 * 1024
-  });
+  }, traceId);
 
   let isTimeLimitExceeded = false;
 

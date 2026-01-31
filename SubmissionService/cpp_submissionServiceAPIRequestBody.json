@@ -1,0 +1,22 @@
+[
+  {
+    "problemTitle": "Valid Palindrome",
+    "language": "cpp",
+    "code": "bool isPalindrome(string s){int l=0,r=s.size()-1;while(l<r){while(l<r&&!isalnum(s[l]))l++;while(l<r&&!isalnum(s[r]))r--;if(tolower(s[l++])!=tolower(s[r--]))return false;}return true;}"
+  },
+  {
+    "problemTitle": "Valid Palindrome II",
+    "language": "cpp",
+    "code": "bool check(string&s,int l,int r){while(l<r)if(s[l++]!=s[r--])return false;return true;}bool validPalindrome(string s){int l=0,r=s.size()-1;while(l<r){if(s[l]!=s[r])return check(s,l+1,r)||check(s,l,r-1);l++;r--;}return true;}"
+  },
+  {
+    "problemTitle": "Reverse String",
+    "language": "cpp",
+    "code": "string reverseString(string s){reverse(s.begin(),s.end());return s;}"
+  },
+  {
+    "problemTitle": "Reverse Vowels of a String",
+    "language": "cpp",
+    "code": "string reverseVowels(string s){unordered_set<char>v={'a','e','i','o','u','A','E','I','O','U'};int l=0,r=s.size()-1;while(l<r){while(l<r&&!v.count(s[l]))l++;while(l<r&&!v.count(s[r]))r--;swap(s[l++],s[r--]);}return s;}"
+  }
+]
