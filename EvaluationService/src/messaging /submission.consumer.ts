@@ -26,7 +26,7 @@ export async function startSubmissionConsumer() {
           submissionId: payload.submissionId,
         });
 
-        // 🔐 IDEMPOTENCY GATE
+        //Idempotency check: Try to create a new evaluation execution record
         try {
           await EvaluationExecutionModel.create({
             submissionId: payload.submissionId,
