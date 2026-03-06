@@ -1,0 +1,18 @@
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 56px;
+    border-bottom: 1px solid #e0e0e0;
+    background: var(--bg);
+    position: sticky;
+    top:0;
+    z-index: 10;
+}
+
+.logo{font-weight: 700; color:var(--text); font-size:16px}
+ul { display: flex; gap: 28px; list-style: none; }
+ul a {color: var(--text2); font-size: 14px; font-weight: 500; transition: color 0.3s ease;}
+ul a.active {color: var(--text);}
+.nav-actions {display: flex; gap:10px}

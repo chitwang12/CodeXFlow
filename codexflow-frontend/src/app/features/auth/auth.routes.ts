@@ -5,10 +5,10 @@ import { Signup } from './signup/signup/signup';
 export const AUTH_ROUTES: Routes = [
   {
     path: 'login',
-    component: Login
+   loadComponent: () => import('./login/login/login').then(m => m.Login)
   },
   {
     path: 'signup',
-    component: Signup
+    loadComponent: () => import('./signup/signup/signup').then(m => m.Signup)
   }
 ];

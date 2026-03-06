@@ -1,1 +1,20 @@
-<p>navbar works!</p>
+<nav>
+
+    <a class = "logo" routerLink = "/"> CodeXFlow</a>
+
+    <ul> 
+        <li> 
+            <a routerLink ="/problems" routerLinkActive="active">Problems</a>
+        </li>
+
+        <li>
+            <a routerLink="/profile" routerLinkActive="active">Profile</a>
+        </li>
+    </ul>
+
+    <div class="nav-actions">
+        <a routerLink="/auth/login" class = "btn-ghost"> Sign In</a>
+
+        <a routerLink = "/auth/signup" class = "btn-primary"> Get Started</a>
+        </div>
+</nav>
