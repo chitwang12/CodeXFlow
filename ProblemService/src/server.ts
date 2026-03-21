@@ -7,9 +7,14 @@ import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import { connectDB } from './config/db.config';
 const app = express();
+import cors from 'cors';
 
 app.use(express.json());
-
+app.use(cors({
+    origin: '*', // Allow all origins (you can restrict this in production)
+    methods: 'GET,POST,PUT,DELETE', // Allowed HTTP methods
+    allowedHeaders: 'Content-Type,Authorization', // Allowed headers
+}));
 /**
  * Registering all the routers and their corresponding routes with out app server object.
  */
@@ -17,6 +22,7 @@ app.use(express.json());
 app.use(attachCorrelationIdMiddleware);
 app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router); 
+
 
 
 /**
